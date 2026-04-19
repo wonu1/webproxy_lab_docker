@@ -1,10 +1,10 @@
 /* $begin tinymain */
 /*
- * tiny.c - A simple, iterative HTTP/1.0 Web server that uses the
- *     GET method to serve static and dynamic content.
+ * tiny.c - GET 메서드를 사용하여
+ *     정적 및 동적 콘텐츠를 제공하는 간단한 반복형 HTTP/1.0 웹 서버입니다.
  *
- * Updated 11/2019 droh
- *   - Fixed sprintf() aliasing issue in serve_static(), and clienterror().
+ * 수정 11/2019 droh
+ *   - serve_static()와 clienterror()의 sprintf() aliasing 문제를 수정했습니다.
  */
 #include "csapp.h"
 
@@ -24,7 +24,7 @@ int main(int argc, char **argv)
   socklen_t clientlen;
   struct sockaddr_storage clientaddr;
 
-  /* Check command line args */
+  /* 명령줄 인자를 확인합니다 */
   if (argc != 2)
   {
     fprintf(stderr, "usage: %s <port>\n", argv[0]);
@@ -46,7 +46,7 @@ int main(int argc, char **argv)
 }
 
 /*
- * doit - handle one HTTP request/response transaction
+ * doit - 하나의 HTTP 요청/응답 트랜잭션을 처리합니다
  */
 void doit(int fd)
 {
@@ -56,7 +56,7 @@ void doit(int fd)
   char filename[MAXLINE], cgiargs[MAXLINE];
   rio_t rio;
 
-  /* Read request line and headers */
+  /* 요청 줄과 헤더를 읽습니다 */
   Rio_readinitb(&rio, fd);
   if (!Rio_readlineb(&rio, buf, MAXLINE))
     return;
@@ -70,7 +70,7 @@ void doit(int fd)
   }
   read_requesthdrs(&rio);
 
-  /* Parse URI from GET request */
+  /* GET 요청에서 URI를 파싱합니다 */
   is_static = parse_uri(uri, filename, cgiargs);
   if (stat(filename, &sbuf) < 0)
   {
@@ -80,7 +80,7 @@ void doit(int fd)
   }
 
   if (is_static)
-  { /* Serve static content */
+  { /* 정적 콘텐츠를 제공합니다 */
     if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode))
     {
       clienterror(fd, filename, "403", "Forbidden",
@@ -90,7 +90,7 @@ void doit(int fd)
     serve_static(fd, filename, sbuf.st_size);
   }
   else
-  { /* Serve dynamic content */
+  { /* 동적 콘텐츠를 제공합니다 */
     if (!(S_ISREG(sbuf.st_mode)) || !(S_IXUSR & sbuf.st_mode))
     {
       clienterror(fd, filename, "403", "Forbidden",
@@ -102,7 +102,7 @@ void doit(int fd)
 }
 
 /*
- * read_requesthdrs - read HTTP request headers
+ * read_requesthdrs - HTTP 요청 헤더를 읽습니다
  */
 void read_requesthdrs(rio_t *rp)
 {
@@ -119,15 +119,15 @@ void read_requesthdrs(rio_t *rp)
 }
 
 /*
- * parse_uri - parse URI into filename and CGI args
- *             return 0 if dynamic content, 1 if static
+ * parse_uri - URI를 파일 이름과 CGI 인자로 파싱합니다
+ *             동적 콘텐츠면 0, 정적 콘텐츠면 1을 반환합니다
  */
 int parse_uri(char *uri, char *filename, char *cgiargs)
 {
   char *ptr;
 
   if (!strstr(uri, "cgi-bin"))
-  { /* Static content */
+  { /* 정적 콘텐츠 */
     strcpy(cgiargs, "");
     strcpy(filename, ".");
     strcat(filename, uri);
@@ -136,7 +136,7 @@ int parse_uri(char *uri, char *filename, char *cgiargs)
     return 1;
   }
   else
-  { /* Dynamic content */
+  { /* 동적 콘텐츠 */
     ptr = index(uri, '?');
     if (ptr)
     {
@@ -152,7 +152,7 @@ int parse_uri(char *uri, char *filename, char *cgiargs)
 }
 
 /*
- * serve_static - copy a file back to the client
+ * serve_static - 파일을 클라이언트로 다시 보냅니다
  */
 void serve_static(int fd, char *filename, int filesize)
 {
@@ -164,10 +164,10 @@ void serve_static(int fd, char *filename, int filesize)
   int n;
   int remaining = sizeof(buf);
 
-  /* Send response headers to client */
+  /* 응답 헤더를 클라이언트에 보냅니다 */
   get_filetype(filename, filetype);
 
-  /* Build the HTTP response headers correctly - use separate buffers or append */
+  /* HTTP 응답 헤더를 올바르게 구성합니다 - 별도 버퍼를 쓰거나 이어 붙입니다 */
   n = snprintf(p, remaining, "HTTP/1.0 200 OK\r\n");
   p += n;
   remaining -= n;
@@ -192,7 +192,7 @@ void serve_static(int fd, char *filename, int filesize)
   printf("Response headers:\n");
   printf("%s", buf);
 
-  /* Send response body to client */
+  /* 응답 본문을 클라이언트에 보냅니다 */
   srcfd = Open(filename, O_RDONLY, 0);
   srcp = Mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);
   Close(srcfd);
@@ -201,7 +201,7 @@ void serve_static(int fd, char *filename, int filesize)
 }
 
 /*
- * get_filetype - derive file type from file name
+ * get_filetype - 파일 이름에서 파일 형식을 구합니다
  */
 void get_filetype(char *filename, char *filetype)
 {
@@ -225,25 +225,25 @@ void serve_dynamic(int fd, char *filename, char *cgiargs)
   char buf[MAXLINE], *emptylist[] = {NULL};
   pid_t pid;
 
-  /* Return first part of HTTP response */
+  /* HTTP 응답의 첫 부분을 반환합니다 */
   sprintf(buf, "HTTP/1.0 200 OK\r\n");
   Rio_writen(fd, buf, strlen(buf));
   sprintf(buf, "Server: Tiny Web Server\r\n");
   Rio_writen(fd, buf, strlen(buf));
 
-  /* Create a child process to handle the CGI program */
+  /* CGI 프로그램을 처리할 자식 프로세스를 생성합니다 */
   if ((pid = Fork()) < 0)
-  { /* Fork failed */
+  { /* Fork 실패 */
     perror("Fork failed");
     return;
   }
 
   if (pid == 0)
-  { /* Child process */
-    /* Real server would set all CGI vars here */
+  { /* 자식 프로세스 */
+    /* 실제 서버라면 여기서 모든 CGI 변수를 설정합니다 */
     setenv("QUERY_STRING", cgiargs, 1);
 
-    /* Redirect stdout to client */
+    /* stdout을 클라이언트로 리다이렉트합니다 */
     if (Dup2(fd, STDOUT_FILENO) < 0)
     {
       perror("Dup2 error");
@@ -251,16 +251,16 @@ void serve_dynamic(int fd, char *filename, char *cgiargs)
     }
     Close(fd);
 
-    /* Run CGI program */
+    /* CGI 프로그램을 실행합니다 */
     Execve(filename, emptylist, environ);
 
-    /* If we get here, Execve failed */
+    /* 여기까지 왔다면 Execve가 실패한 것입니다 */
     perror("Execve error");
     exit(1);
   }
   else
-  { /* Parent process */
-    /* Parent waits for child to terminate */
+  { /* 부모 프로세스 */
+    /* 부모는 자식이 종료되기를 기다립니다 */
     int status;
     if (waitpid(pid, &status, 0) < 0)
     {
@@ -268,9 +268,9 @@ void serve_dynamic(int fd, char *filename, char *cgiargs)
     }
 
     printf("Child process %d terminated with status %d\n", pid, status);
-    /* Parent continues normally - returns to doit() */
+    /* 부모는 정상적으로 계속 진행합니다 - doit()로 돌아갑니다 */
   }
-  /* When we return from here, doit() will close the connection */
+  /* 여기서 반환되면 doit()가 연결을 닫습니다 */
 }
 
 /*
@@ -281,7 +281,7 @@ void clienterror(int fd, char *cause, char *errnum,
 {
   char buf[MAXLINE], body[MAXBUF];
 
-  /* Build the HTTP response body */
+  /* HTTP 응답 본문을 구성합니다 */
   sprintf(body, "<html><title>Tiny Error</title>");
   sprintf(body, "%s<body bgcolor="
                 "ffffff"
@@ -291,7 +291,7 @@ void clienterror(int fd, char *cause, char *errnum,
   sprintf(body, "%s<p>%s: %s\r\n", body, longmsg, cause);
   sprintf(body, "%s<hr><em>The Tiny Web server</em>\r\n", body);
 
-  /* Print the HTTP response */
+  /* HTTP 응답을 출력합니다 */
   sprintf(buf, "HTTP/1.0 %s %s\r\n", errnum, shortmsg);
   Rio_writen(fd, buf, strlen(buf));
   sprintf(buf, "Content-type: text/html\r\n");
